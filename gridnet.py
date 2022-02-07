@@ -7,8 +7,8 @@ import pandas as pd
 from utils import *
 from models import *
 
-def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,
-			dag_adjacency_matrix,n_layers=10,device=0,seed=1,batch_size=1024,optim='adam',
+def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjacency_matrix,
+			n_layers=10,device=0,seed=1,batch_size=1024,optim='adam',
 			initial_learning_rate=0.001,beta_1=0.9,beta_2=0.999,max_epochs=20,
 			save_dir='./gridnet_results',save_name='gridnet',verbose=True):
 
@@ -46,7 +46,7 @@ def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,
 		beta_1 term used in the Adam optimization algorithm.
 	beta_2: 'float' (default: 0.999)
 		beta_2 term used in the Adam optimization algorithm.
-	max_epochs: 'int' (default: )
+	max_epochs: 'int' (default: 20)
 		Maximum number of epochs to train the model.
 	save_dir: 'string' (default: './gridnet_results')
 		Directory to save the model and the statistics associated

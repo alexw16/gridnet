@@ -27,12 +27,6 @@ def construct_dag(joint_feature_embeddings,iroot,n_neighbors=15,pseudotime_algo=
 			respectively.
 	"""
 
-	if iroot is None:
-		raise ValueError('Cannot construct DAG without root cell (iroot)')
-	if joint_feature_embeddings is None:
-		raise ValueError('Cannot construct DAG without joint feature '
-							'representation (joint_feature_embeddings)')
-
 	pseudotime,knn_graph = infer_knngraph_pseudotime(joint_feature_embeddings,iroot,
 		n_neighbors=n_neighbors,pseudotime_algo=pseudotime_algo)
 	dag_adjacency_matrix = dag_orient_edges(knn_graph,pseudotime)
