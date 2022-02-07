@@ -10,10 +10,10 @@ In the case of inferring peak-gene pairs from single-cell multi-omic datasets, t
 # matrix of dimensions N x C 
 # (N = number of observations, C = number of candidate Granger causal variables)
 X = numpy.ndarray 
+
 # matrix of dimensions N x T 
 # (N = number of observations, T = number of target variables) 
-
-Y = numpy.ndarray with dimensions N x T 
+Y = numpy.ndarray 
 
 # list of length C
 # (C = number of candidate Granger causal variables)
@@ -36,7 +36,7 @@ GrID-Net requires a user-defined DAG that defines the relationships between obse
 
 ```python
 # matrix of dimensions N x N
-# N = number of observations)
+# N = number of observations
 dag_adjacency_matrix = scipy.sparse.csr_matrix or numpy.ndarray 
 ```
 
