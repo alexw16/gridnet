@@ -7,26 +7,36 @@ Here is a general workflow for applying GrID-Net to a dataset with a user-define
 In the case of inferring peak-gene pairs from single-cell multi-omic datasets explored in our paper, the candidate Granger causal variables correspond to peaks and the target variables correspond to genes, with each cell as a unique observation. 
 
 ```python
-# N = number of observations, C = number of candidate Granger causal variables
-X = numpy.ndarray with dimensions N x C
-# N = number of observations, T = number of target variables 
+# matrix of dimensions N x C 
+# (N = number of observations, C = number of candidate Granger causal variables)
+X = numpy.ndarray 
+# matrix of dimensions N x T 
+# (N = number of observations, T = number of target variables) 
 Y = numpy.ndarray with dimensions N x T 
-X_feature_names = [list of string] of length C
-Y_feature_names = [list of string] of length T
+
+# list of length C
+# (C = number of candidate Granger causal variables)
+X_feature_names = [list of string] 
+
+# list of length T
+# (T = number of target variables)
+Y_feature_names = [list of string] 
 ```
 
 Then, define the set of candidate Granger causal relationships to be evaluated, using the names of the Granger causal variables and target variables defined above.
 
 ```python
-# x = name of Granger causal variable, y = name of target variable
-candidate_XY_pairs = [list of tuples (x,y)] 
+# list of tuples (xy)
+# (x = name of Granger causal variable, y = name of target variable)
+candidate_XY_pairs = [list of tuples] 
 ```
 
 GrID-Net requires a user-defined DAG that defines the relationships between observations in the dynamical system of interest. The rows and columns of the adjacency matrix that represents the DAG should be ordered in accordance with the order of observations used in defining ```X``` and ```Y``` above. 
 
 ```python
-# N = number of observations
-custom_DAG = numpy.ndarray with dimensions N x N 
+# matrix of dimensions N x N
+# N = number of observations)
+custom_DAG = numpy.ndarray 
 ```
 
 Once these various inputs are defined, simply run the line below to train the GrID-Net model and evaluate the candidate Granger causal relationships. 
