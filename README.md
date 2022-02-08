@@ -44,7 +44,7 @@ Once these inputs are defined, simply run the line below to train the GrID-Net m
 ```python
 import gridnet
 
-run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjacency_matrix)
+results_df = run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjacency_matrix)
 ```
 
 ## Questions

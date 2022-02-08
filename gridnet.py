@@ -3,9 +3,10 @@ import torch.nn as nn
 import numpy as np
 import time
 import pandas as pd
+import os
 
-from utils import *
-from models import *
+from utils import construct_S0_S1
+from models import GraphGrangerModule
 
 def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjacency_matrix,
 			n_layers=10,device=0,seed=1,batch_size=1024,optim='adam',
@@ -64,7 +65,8 @@ def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjac
 	Y_idx = np.array([Y_feature_names_idx_dict[y] for (x,y) in candidate_XY_pairs])
 	pairs_idx = np.arange(len(candidate_XY_pairs))
 
-	torch.cuda.set_device(device)
+	if device != 'cpu':
+		torch.cuda.set_device(device)
 	torch.manual_seed(seed)
 	np.random.seed(1)
 
@@ -85,14 +87,14 @@ def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjac
 
 	train_model(model,Y,X,Y_idx,X_idx,pairs_idx,optimizer,device,max_epochs,batch_size,
 				criterion=nn.MSELoss(),early_stop=True,tol=0.1/len(candidate_XY_pairs),
-				verbose=True,S_0=S_0,S_1=S_1,train_separate=False)
+				verbose=verbose,S_0=S_0,S_1=S_1,train_separate=False)
 
 	if verbose:
 		print('Testing...')
 
 	_,results_dict = run_epoch('Inference',Y,X,Y_idx,X_idx,pairs_idx,
 		S_0,S_1,model,optimizer,device,batch_size,criterion=nn.MSELoss(),
-		verbose=True,train=False,statistics=['lr'])
+		verbose=verbose,train=False,statistics=['lr'])
 
 	if not os.path.exists(save_dir):
 		os.mkdir(save_dir)
@@ -106,7 +108,7 @@ def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjac
 	for k,result in results_dict.items():
 		results_df[k] = result
 	results_df.to_csv(os.path.join(save_dir,'{}.statistics.txt'.format(
-		save_name)),sep='\t')
+		save_name)),sep='\t',index=False)
 
 	if verbose:
 		print('Total Time: {} seconds'.format(time.time()-start))
@@ -125,8 +127,8 @@ def train_model(model,rna_X,atac_X,rna_idx,atac_idx,pair_idx,\
 
 	for epoch_no in range(num_epochs):
 		run_epoch(epoch_no,rna_X,atac_X,rna_idx,atac_idx,pair_idx,
-			S_0,S_1,model,optimizer,device,batch_size,
-			criterion=criterion,verbose=True,train=True,train_separate=train_separate)
+			S_0,S_1,model,optimizer,device,batch_size,criterion=criterion,
+			verbose=verbose,train=True,train_separate=train_separate)
 
 		# # evaluate training loss
 		# if epoch_no > num_epochs/2:

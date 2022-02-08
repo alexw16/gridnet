@@ -1,7 +1,5 @@
 import torch
 import torch.nn as nn
-import os
-import math
 	
 class GraphConvLayer(nn.Module):
 	def __init__(self,n_vars):

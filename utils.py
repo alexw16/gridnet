@@ -1,11 +1,10 @@
 import numpy as np
 import os
 import torch
-from scipy.stats import t,f
+from scipy.stats import f
 from scipy.sparse import csr_matrix
 import scanpy as sc
 import scanpy.external as sce
-import sys
 from anndata import AnnData
 
 def construct_dag(joint_feature_embeddings,iroot,n_neighbors=15,pseudotime_algo='dpt'):
