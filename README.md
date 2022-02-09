@@ -9,19 +9,19 @@ In the case of inferring peak-gene pairs from single-cell multi-omic datasets, t
 ```python
 # matrix of dimensions N x C 
 # (N = number of observations, C = number of candidate Granger causal variables)
-X = numpy.ndarray 
+X : numpy.ndarray 
 
 # matrix of dimensions N x T 
 # (N = number of observations, T = number of target variables) 
-Y = numpy.ndarray 
+Y : numpy.ndarray 
 
 # list of length C
 # (C = number of candidate Granger causal variables)
-X_feature_names = [list of string] 
+X_feature_names : [list of string] 
 
 # list of length T
 # (T = number of target variables)
-Y_feature_names = [list of string] 
+Y_feature_names : [list of string] 
 ```
 
 Then, define the set of candidate Granger causal relationships to be evaluated, using the names of the Granger causal variables and target variables defined above.
@@ -29,7 +29,7 @@ Then, define the set of candidate Granger causal relationships to be evaluated, 
 ```python
 # list of tuples (x,y)
 # (x = name of Granger causal variable, y = name of target variable)
-candidate_XY_pairs = [list of tuples] 
+candidate_XY_pairs : [list of tuples] 
 ```
 
 GrID-Net requires a user-defined DAG that defines the relationships between observations in the dynamical system of interest. The rows and columns of the adjacency matrix that represents the DAG should be ordered in accordance with the order of observations used in defining ```X``` and ```Y``` above. 
@@ -37,14 +37,15 @@ GrID-Net requires a user-defined DAG that defines the relationships between obse
 ```python
 # matrix of dimensions N x N
 # N = number of observations
-dag_adjacency_matrix = scipy.sparse.csr_matrix or numpy.ndarray 
+dag_adjacency_matrix : scipy.sparse.csr_matrix or numpy.ndarray 
 ```
 
 Once these inputs are defined, simply run the line below to train the GrID-Net model and evaluate the candidate Granger causal relationships. 
 ```python
 import gridnet
 
-results_df = run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjacency_matrix)
+results_df = run_gridnet(X,Y,X_feature_names,Y_feature_names,
+                         candidate_XY_pairs,dag_adjacency_matrix)
 ```
 
 ## Questions
