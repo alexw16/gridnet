@@ -9,9 +9,10 @@ from utils import construct_S0_S1
 from models import GraphGrangerModule
 
 def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjacency_matrix,
-			n_layers=10,device=0,seed=1,batch_size=1024,optim='adam',
+			n_layers=10,device=0,seed=1,shuffle=True,batch_size=1024,optim='adam',
 			initial_learning_rate=0.001,beta_1=0.9,beta_2=0.999,max_epochs=20,
-			save_dir='./gridnet_results',save_name='gridnet',verbose=True):
+			train_separate=False,save_dir='./gridnet_results',save_name='gridnet',
+			verbose=True):
 
 	"""Runs GrID-Net to infer Granger causal relationships from DAGs.
 	Parameters
@@ -37,6 +38,8 @@ def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjac
 		Device index to select.
 	seed: 'int' (default: 1)
 		Seed for random state generation.
+	shuffle: 'bool' (default: True)
+		Shuffle list of candidate_XY_pairs during training when True.
 	batch_size: 'int' (default: 1024)
 		Batch size.
 	optim: {'adam','sgd'} (Default: 'adam')
@@ -49,12 +52,21 @@ def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjac
 		beta_2 term used in the Adam optimization algorithm.
 	max_epochs: 'int' (default: 20)
 		Maximum number of epochs to train the model.
+	train_separate: 'bool' (default: False)
+		Train full and reduced models separately when True.
 	save_dir: 'string' (default: './gridnet_results')
 		Directory to save the model and the statistics associated
 		with Granger causal analyses.
 	save_name: 'string' (default: 'gridnet')
 		Prefix to be used for naming the saved files.
+	verbose: 'bool' (default: True)
+		Prints logging output when True.
 	"""
+
+	if device != 'cpu':
+		torch.cuda.set_device(device)
+	torch.manual_seed(seed)
+	np.random.seed(1)
 
 	start = time.time()
 
@@ -65,15 +77,14 @@ def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjac
 	Y_idx = np.array([Y_feature_names_idx_dict[y] for (x,y) in candidate_XY_pairs])
 	pairs_idx = np.arange(len(candidate_XY_pairs))
 
-	if device != 'cpu':
-		torch.cuda.set_device(device)
-	torch.manual_seed(seed)
-	np.random.seed(1)
+	if shuffle:
+		shuffled_idx_list = np.arange(len(candidate_XY_pairs))
+		np.random.shuffle(shuffled_idx_list)
 
 	S_0,S_1 = construct_S0_S1(dag_adjacency_matrix)
 
-	model = GraphGrangerModule(n_layers,X_idx,Y_idx,
-		final_activation='exp')
+	model = GraphGrangerModule(n_layers,X_idx,Y_idx,final_activation='exp')
+
 	model.to(device)
 	S_0 = torch.FloatTensor(S_0).to(device)
 	S_1 = torch.FloatTensor(S_1).to(device)
@@ -85,12 +96,15 @@ def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjac
 		optimizer = torch.optim.Adam(params=model.parameters(), 
 			lr=initial_learning_rate, betas=(beta_1, beta_2))
 
-	train_model(model,Y,X,Y_idx,X_idx,pairs_idx,optimizer,device,max_epochs,batch_size,
-				criterion=nn.MSELoss(),early_stop=True,tol=0.1/len(candidate_XY_pairs),
-				verbose=verbose,S_0=S_0,S_1=S_1,train_separate=False)
-
-	if verbose:
-		print('Testing...')
+	if shuffle:
+		train_model(model,Y,X,Y_idx[shuffled_idx_list],X_idx[shuffled_idx_list],
+					pairs_idx[shuffled_idx_list],optimizer,device,max_epochs,batch_size,
+					criterion=nn.MSELoss(),early_stop=True,tol=0.1/len(candidate_XY_pairs),
+					verbose=verbose,S_0=S_0,S_1=S_1,train_separate=False)
+	else:
+		train_model(model,Y,X,Y_idx,X_idx,pairs_idx,optimizer,device,max_epochs,batch_size,
+					criterion=nn.MSELoss(),early_stop=True,tol=0.1/len(candidate_XY_pairs),
+					verbose=verbose,S_0=S_0,S_1=S_1,train_separate=False)
 
 	_,results_dict = run_epoch('Inference',Y,X,Y_idx,X_idx,pairs_idx,
 		S_0,S_1,model,optimizer,device,batch_size,criterion=nn.MSELoss(),
@@ -119,29 +133,11 @@ def train_model(model,rna_X,atac_X,rna_idx,atac_idx,pair_idx,\
 				optimizer,device,num_epochs,batch_size,\
 				criterion=nn.MSELoss(),early_stop=True,tol=0.01,verbose=True,\
 				S_0=None,S_1=None,train_separate=False):
-	
-	train_atac_idx = np.array(atac_idx)
-	train_rna_idx = np.array(rna_idx)
-
-	train_loss_list = []
 
 	for epoch_no in range(num_epochs):
 		run_epoch(epoch_no,rna_X,atac_X,rna_idx,atac_idx,pair_idx,
 			S_0,S_1,model,optimizer,device,batch_size,criterion=criterion,
 			verbose=verbose,train=True,train_separate=train_separate)
-
-		# # evaluate training loss
-		# if epoch_no > num_epochs/2:
-		# 	train_loss = run_epoch(epoch_no,rna_X,atac_X,
-		# 		train_rna_idx,train_atac_idx,train_idx,S_0,S_1,model,
-		# 		optimizer,device,batch_size,criterion=criterion,verbose=True,train=False)
-		# 	train_loss_list.append(test_loss)
-
-		# if epoch_no > num_epochs/2 + 2 and early_stop:
-		# 	train_loss_change_1 = (train_loss_list[-2] - train_loss_list[-1])/abs(train_loss_list[-2])
-		# 	train_loss_change_2 = (train_loss_list[-3] - train_loss_list[-2])/abs(train_loss_list[-3])
-		# 	if train_loss_change_1 < tol and train_loss_change_2 < tol:
-		# 		break
 
 def run_epoch(epoch_no,rna_X,atac_X,rna_idx,atac_idx,pair_idx,S_0,S_1,model,
 			  optimizer,device=0,batch_size=1024,criterion=nn.MSELoss(),
@@ -185,6 +181,7 @@ def run_epoch(epoch_no,rna_X,atac_X,rna_idx,atac_idx,pair_idx,S_0,S_1,model,
 			total_loss += full_loss.data.cpu().numpy()
 
 		elif train_separate == 'reduced' and not statistics:
+
 			red_loss = criterion(red_preds, targets)
 
 			if train:
