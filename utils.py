@@ -8,22 +8,24 @@ import scanpy.external as sce
 from anndata import AnnData
 
 def construct_dag(joint_feature_embeddings,iroot,n_neighbors=15,pseudotime_algo='dpt'):
-	"""
-		joint_feature_embeddings: 'numpy.ndarray' (default: None)
-			Matrix of low dimensional embeddings with rows corresponding
-			to observations and columns corresponding to feature embeddings
-			for constructing a DAG if a custom DAG is not provided.
-		iroot: 'int' (default: None)
-			Index of root cell for inferring pseudotime for constructing a DAG 
-			if a custom DAG is not provided.
-		n_neighbors: 'int' (default: 15)
-			Number of nearest neighbors to use in constructing a k-nearest
-			neighbor graph for constructing a DAG if a custom DAG is not provided.
-		pseudotime_algo: {'dpt','palantir'} 
-			Pseudotime algorithm to use for constructing a DAG if a custom DAG 
-			is not provided. 'dpt' and 'palantir' perform the diffusion pseudotime
-			(Haghverdi et al., 2016) and Palantir (Setty et al., 2019) algorithms, 
-			respectively.
+	"""Constructs the adjacency matrix for a DAG.
+	Parameters
+	----------
+	joint_feature_embeddings: 'numpy.ndarray' (default: None)
+		Matrix of low dimensional embeddings with rows corresponding
+		to observations and columns corresponding to feature embeddings
+		for constructing a DAG if a custom DAG is not provided.
+	iroot: 'int' (default: None)
+		Index of root cell for inferring pseudotime for constructing a DAG 
+		if a custom DAG is not provided.
+	n_neighbors: 'int' (default: 15)
+		Number of nearest neighbors to use in constructing a k-nearest
+		neighbor graph for constructing a DAG if a custom DAG is not provided.
+	pseudotime_algo: {'dpt','palantir'} 
+		Pseudotime algorithm to use for constructing a DAG if a custom DAG 
+		is not provided. 'dpt' and 'palantir' perform the diffusion pseudotime
+		(Haghverdi et al., 2016) and Palantir (Setty et al., 2019) algorithms, 
+		respectively.
 	"""
 
 	pseudotime,knn_graph = infer_knngraph_pseudotime(joint_feature_embeddings,iroot,
