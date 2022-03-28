@@ -126,7 +126,7 @@ def retain_desired_indices(rna_adata,atac_adata,rna_idx,atac_idx):
 
 	return rna_X,atac_X,rna_idx,atac_idx
 
-def lr_ftest(lr,n_layers,n):
+def rss_ratio_ftest(rss_ratio,n_layers,n):
 	
 	from scipy.stats import f
 
@@ -140,7 +140,7 @@ def lr_ftest(lr,n_layers,n):
 	dfn = 2 * n_layers + 1
 	dfd = n - 4 * n_layers - 1
 
-	F = (lr - 1) * (n - p2)/(p2-p1)
+	F = (rss_ratio - 1) * (n - p2)/(p2-p1)
 
 	return 1-f.cdf(F,dfn,dfd)
 

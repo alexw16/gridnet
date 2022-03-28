@@ -5,7 +5,7 @@ import time
 import pandas as pd
 import os
 
-from utils import construct_S0_S1
+from utils import construct_S0_S1,rss_ratio_ftest
 from models import GraphGrangerModule
 
 def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjacency_matrix,
@@ -89,7 +89,7 @@ def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjac
 	S_0 = torch.FloatTensor(S_0).to(device)
 	S_1 = torch.FloatTensor(S_1).to(device)
 
-	if optim =='sgd':
+	if optim == 'sgd':
 		optimizer = torch.optim.SGD(params=model.parameters(), 
 			lr=initial_learning_rate)
 	elif optim == 'adam':
@@ -108,7 +108,7 @@ def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjac
 
 	_,results_dict = run_epoch('Inference',Y,X,Y_idx,X_idx,pairs_idx,
 		S_0,S_1,model,optimizer,device,batch_size,criterion=nn.MSELoss(),
-		verbose=verbose,train=False,statistics=['lr'])
+		verbose=verbose,train=False,statistics=['rss_ratio','ftest'])
 
 	if not os.path.exists(save_dir):
 		os.mkdir(save_dir)
@@ -210,13 +210,13 @@ def run_epoch(epoch_no,rna_X,atac_X,rna_idx,atac_idx,pair_idx,S_0,S_1,model,
 
 			for j in range(full_rss.shape[0]):
 
-				if 'lr' in statistics:
+				if 'rss_ratio' in statistics:
 					lr = red_rss[j].sum()/full_rss[j].sum()
-					results_dict['lr'].append(lr)
+					results_dict['rss_ratio'].append(lr)
 
 				if 'ftest' in statistics:
 					# num of parameters: W,b per layer per modality
-					F,ftest_p = f_test(full_rss[j].sum(),red_rss[j].sum(),
+					F,ftest_p = rss_ratio_ftest(full_rss[j].sum(),red_rss[j].sum(),
 						model.num_hidden_layers*2*2+1,model.num_hidden_layers*2,
 						len(full_rss[j]))
 					results_dict['ftest'].append(ftest_p)
