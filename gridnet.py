@@ -211,14 +211,14 @@ def run_epoch(epoch_no,rna_X,atac_X,rna_idx,atac_idx,pair_idx,S_0,S_1,model,
 			for j in range(full_rss.shape[0]):
 
 				if 'rss_ratio' in statistics:
-					lr = red_rss[j].sum()/full_rss[j].sum()
-					results_dict['rss_ratio'].append(lr)
+					rss_ratio = red_rss[j].sum()/full_rss[j].sum()
+					results_dict['rss_ratio'].append(rss_ratio)
 
 				if 'ftest' in statistics:
 					# num of parameters: W,b per layer per modality
-					F,ftest_p = rss_ratio_ftest(full_rss[j].sum(),red_rss[j].sum(),
-						model.num_hidden_layers*2*2+1,model.num_hidden_layers*2,
-						len(full_rss[j]))
+					rss_ratio = red_rss[j].sum()/full_rss[j].sum()
+					ftest_p = rss_ratio_ftest(rss_ratio,
+						model.num_hidden_layers,rna_X.shape[0])
 					results_dict['ftest'].append(ftest_p)
 
 	end = time.time()

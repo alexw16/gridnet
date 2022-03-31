@@ -81,13 +81,18 @@ def construct_S0_S1(D):
 
 	return S_0,S_1
 
-def load_multiome_data(data_dir,dataset,sketch=False,preprocess=True):
+def load_multiome_data(data_dir,dataset,sampling=None,preprocess=True):
 
-	if sketch:
+	if sampling == 'geosketch':
 		atac_adata = sc.read(os.path.join(data_dir,
 			'{}.atac.sketch.h5ad'.format(dataset)))
 		rna_adata = sc.read(os.path.join(data_dir,
 			'{}.rna.sketch.h5ad'.format(dataset)))
+	elif sampling == 'uniform':
+		atac_adata = sc.read(os.path.join(data_dir,
+			'{}.atac.uniform.h5ad'.format(dataset)))
+		rna_adata = sc.read(os.path.join(data_dir,
+			'{}.rna.uniform.h5ad'.format(dataset)))
 	else:
 		atac_adata = sc.read(os.path.join(data_dir,
 			'{}.atac.h5ad'.format(dataset)))
