@@ -45,7 +45,8 @@ For single-cell multimodal data, we construct a DAG of cell states using the bel
 ```python
 from utils import construct_dag
 
-dag_adjacency_matrix = construct_dag(joint_feature_embeddings,iroot,n_neighbors=15,pseudotime_algo='dpt')
+dag_adjacency_matrix = construct_dag(joint_feature_embeddings,iroot,
+                                     n_neighbors=15,pseudotime_algo='dpt')
 ```
 
 Once these inputs are defined, simply run the line below to train the GrID-Net model and evaluate the candidate Granger causal relationships. 
