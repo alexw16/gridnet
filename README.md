@@ -40,6 +40,12 @@ GrID-Net requires a user-defined DAG that defines the relationships between obse
 dag_adjacency_matrix : scipy.sparse.csr_matrix or numpy.ndarray 
 ```
 
+For single-cell multimodal data, we construct a DAG of cell states using the below function. ```joint_feature_embeddings``` represent the cell embeddings used to assess cell-cell similarity. We use [Schema](https://github.com/rs239/schema) (Singh, R., Hie, B. *et al.*, 2021) to generate these joint feature embeddings. ```iroot``` corresponds to the index of the cell to be used as the root cell for pseudotime inference, ```n_neighbors``` specifies the number of nearest neighobrs to be used in the k-nearest neighbor graph, and ```pseudotime_algo``` denotes the pseudotime inference algorithm to be used for orienting the edges in the graph.  
+
+```python
+dag_adjacency_matrix = construct_dag(joint_feature_embeddings,iroot,n_neighbors=15,pseudotime_algo='dpt')
+```
+
 Once these inputs are defined, simply run the line below to train the GrID-Net model and evaluate the candidate Granger causal relationships. 
 ```python
 import gridnet
