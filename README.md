@@ -27,12 +27,12 @@ Some key parameters that users can optionally adjust in this function include
 3. ```atac_filter_peak_percent```: minimum proportion of cells a peak is accessible to be considered in a candidate peak-gene pair (default: 0.1% of cells)
 
 ### Multimodal Single-Cell Data (RNA-seq + ATAC-seq): Detailed
-For users seeking greater control over the various pre-processing and analysis steps for single-cell multimodal data, we include here a step-by-step description for each key function.
+For users seeking greater control over the various pre-processing and analysis steps for single-cell multimodal data, we include here the key steps that lead up to using GrID-Net on this data.
 1. Data pre-processing: count normalization and log(1+x) transformation
 ```python
 preprocess_multimodal(rna_adata,atac_adata)
 ```
-2. Determining candidate peak-gene pairs: identify all peak-gene pairs to be evaluated based on the genomic distance between a peak and the TSS of a gene
+2. Determining candidate peak-gene pairs: identify all peak-gene pairs to be evaluated based on the genomic distance between a peak and the TSS of a gene. Outputs a DataFrame containing the candidate peak-gene pairs.
 ```python
 candidates_df = identify_all_peak_gene_link_candidates(rna_adata,atac_adata,distance_thresh=1e6)
 ```
@@ -44,6 +44,17 @@ X_joint = schema_representations(rna_adata,atac_adata)
 ```python
 dag_adjacency_matrix = contruct_dag(X_joint,iroot,n_neighbors=15,pseudotime_algo='dpt')
 ```
+5. Run GrID-Net: uses the various results from above to infer Granger causal peak-gene links. Outputs a DataFrame annotating the candidate peak-gene pairs and the corresponding Granger causality test statistics.  
+```python
+X = np.array(atac_adata.X)
+Y = np.array(rna_adata.X)
+X_feature_names = atac_adata.var.index.values
+Y_feature_names = rna_adata.var.index.values
+candidate_XY_pairs = [(x,y) for x,y in candidates_df[['atac_id','gene']].values]
+    
+results_df = run_gridnet(X,Y,X_feature_names,Y_feature_names,
+                         candidate_XY_pairs,dag_adjacency_matrix)
+``` 
 
 ### General Usage
 Here is a general workflow for applying GrID-Net to a dataset with a user-defined DAG. First, prepare one dataset that contains the candidate Granger causal variables and another that contains the target variables. The rows of the two datasets should be paired, such that row *n* corresponds to the candidate Granger causal variable values and target variable values for the same observation *n*.  
