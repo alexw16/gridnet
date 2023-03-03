@@ -1,5 +1,13 @@
 # GrID-Net
-**GrID-Net** (**Gr**anger **I**nference on **D**AGs) is a graph neural network framework for Granger causal inference on directed acyclic graph (DAG)-structured dynamical systems, as described in the paper ["Granger causal inference on DAGs identifies genomic loci regulating transcription"](https://openreview.net/forum?id=nZOUYEN6Wvy). It takes as input (1) a dataset featurized by the set of candidate Granger causal variables of interest, (2) a corresponding dataset featurized by the set of target variables of interest, (3) a set of candidate Granger causal relationships to be evaluated, and (4) a DAG representing the relationship between observations in the dataset. The output is a table of statistics that describes the significance of each of the tested candidate Granger causal relationships. 
+**GrID-Net** (**Gr**anger **I**nference on **D**AGs) is a graph neural network framework for Granger causal inference on directed acyclic graph (DAG)-structured dynamical systems, as described in the preprint ["An econometric lens resolves cell-state parallax"](https://www.biorxiv.org/content/10.1101/2023.03.02.530529) and the paper ["Granger causal inference on DAGs identifies genomic loci regulating transcription"](https://arxiv.org/abs/2210.10168). It takes as input (1) a dataset featurized by the set of candidate Granger causal variables of interest, (2) a corresponding dataset featurized by the set of target variables of interest, (3) a set of candidate Granger causal relationships to be evaluated, and (4) a DAG representing the relationship between observations in the dataset. The output is a table of statistics that describes the significance of each of the tested candidate Granger causal relationships. 
+
+## Installation
+```python
+pip install gridnet_learn  
+
+#in python
+import gridnet
+```
 
 ## Usage
 ### Multimodal Single-Cell Data (RNA-seq + ATAC-seq): Quick Start
@@ -7,10 +15,10 @@ To use GrID-Net for inferring noncoding locus (i.e. peak)-gene links from single
 
 ```python
 # runs GrID-Net using a marker gene to determine the root cell 
-results_df = gridnet_multimodal(rna_adata,atac_adata,root_cell_marker_gene='TOP2A')
+results_df = gridnet.gridnet_multimodal(rna_adata,atac_adata,root_cell_marker_gene='TOP2A')
 
 # runs GrID-Net given the index of the root cell 
-results_df = gridnet_multimodal(rna_adata,atac_adata,root_cell_idx=0)
+results_df = gridnet.gridnet_multimodal(rna_adata,atac_adata,root_cell_idx=0)
 ```
 
 Note that the AnnData object for the RNA-seq dataset must include annotations for the genomic position of the transcription start site (TSS) for each gene in its ```adata.var``` DataFrame. Similarly, the AnnData object for the ATAC-seq dataset must include annotations for the genomic positions of the start and end sites for all peaks in its ```adata.var``` DataFrame. The default settings require that the columns in the DataFrames corresponding to these annotations be labeled as such.
@@ -30,19 +38,19 @@ Some key parameters that users can optionally adjust in this function include
 For users seeking greater control over the various pre-processing and analysis steps for single-cell multimodal data, we include here the key steps that lead up to using GrID-Net on this data.
 1. Data pre-processing: count normalization and log(1+x) transformation
 ```python
-preprocess_multimodal(rna_adata,atac_adata)
+gridnet.preprocess_multimodal(rna_adata,atac_adata)
 ```
 2. Determining candidate peak-gene pairs: identify all peak-gene pairs to be evaluated based on the genomic distance between a peak and the TSS of a gene. Outputs a DataFrame containing the candidate peak-gene pairs.
 ```python
-candidates_df = identify_all_peak_gene_link_candidates(rna_adata,atac_adata,distance_thresh=1e6)
+candidates_df = gridnet.identify_all_peak_gene_link_candidates(rna_adata,atac_adata,distance_thresh=1e6)
 ```
 3. Learn multimodal cell representations: use Schema to learn a joint representation for each cell that unifies information from both the ATAC-seq and RNA-seq modalities
 ```python
-X_joint = schema_representations(rna_adata,atac_adata) 
+X_joint = gridnet.schema_representations(rna_adata,atac_adata) 
 ```
 4. Construct the DAG of cells: use the multimodal cell representations to infer pseudotime and to orient the edges of the kNN graph to form a DAG 
 ```python
-dag_adjacency_matrix = contruct_dag(X_joint,iroot,n_neighbors=15,pseudotime_algo='dpt')
+dag_adjacency_matrix = gridnet.contruct_dag(X_joint,iroot,n_neighbors=15,pseudotime_algo='dpt')
 ```
 5. Run GrID-Net: uses the various results from above to infer Granger causal peak-gene links. Outputs a DataFrame annotating the candidate peak-gene pairs and the corresponding Granger causality test statistics.  
 ```python
@@ -52,7 +60,7 @@ X_feature_names = atac_adata.var.index.values
 Y_feature_names = rna_adata.var.index.values
 candidate_XY_pairs = [(x,y) for x,y in candidates_df[['atac_id','gene']].values]
     
-results_df = run_gridnet(X,Y,X_feature_names,Y_feature_names,
+results_df = gridnet.run_gridnet(X,Y,X_feature_names,Y_feature_names,
                          candidate_XY_pairs,dag_adjacency_matrix)
 ``` 
 
@@ -98,18 +106,15 @@ dag_adjacency_matrix : scipy.sparse.csr_matrix or numpy.ndarray
 For single-cell multimodal data, we construct a DAG of cell states using the below function. ```joint_feature_embeddings``` represent the cell embeddings used to assess cell-cell similarity. We use [Schema](https://github.com/rs239/schema) (Singh, R., Hie, B. *et al.*, 2021) to generate these joint feature embeddings. ```iroot``` corresponds to the index of the cell to be used as the root cell for pseudotime inference, ```n_neighbors``` specifies the number of nearest neighobrs to be used in the k-nearest neighbor graph, and ```pseudotime_algo``` denotes the pseudotime inference algorithm to be used for orienting the edges in the graph.  
 
 ```python
-from utils import construct_dag
-
-dag_adjacency_matrix = construct_dag(joint_feature_embeddings,iroot,
-                                     n_neighbors=15,pseudotime_algo='dpt')
+dag_adjacency_matrix = gridnet.construct_dag(joint_feature_embeddings,iroot,
+                                             n_neighbors=15,pseudotime_algo='dpt')
 ```
 
 Once these inputs are defined, simply run the line below to train the GrID-Net model and evaluate the candidate Granger causal relationships. 
 ```python
-import gridnet
 
-results_df = run_gridnet(X,Y,X_feature_names,Y_feature_names,
-                         candidate_XY_pairs,dag_adjacency_matrix)
+results_df = gridnet.run_gridnet(X,Y,X_feature_names,Y_feature_names,
+                                 candidate_XY_pairs,dag_adjacency_matrix)
 ```
 
 ## Questions
