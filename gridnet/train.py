@@ -4,8 +4,10 @@ import numpy as np
 import time
 import pandas as pd
 import os
+import sys
+from scipy.sparse import issparse
 
-from utils import construct_S0_S1,rss_ratio_ftest
+from utils import *
 from models import GraphGrangerModule
 
 def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjacency_matrix,
@@ -234,3 +236,105 @@ def run_epoch(epoch_no,rna_X,atac_X,rna_idx,atac_idx,pair_idx,S_0,S_1,model,
 	else:
 		return total_loss
 
+def gridnet_multimodal(rna_adata,atac_adata,root_cell_marker_gene=None,root_cell_idx=None,
+					   preprocess=True,rna_chr_key='chr_no',rna_txstart_key='txstart',
+					   atac_chr_key='chr_no',atac_start_key='start',atac_end_key='end',
+					   rna_normalize_total=1e5,atac_normalize_total=1e4,
+					   rna_filter_gene_percent=0.01,atac_filter_peak_percent=0.001,
+					   distance_thresh=1e6,scale_rna_by_max=True,device=0):
+	
+	"""Runs GrID-Net on multimodal single-cell data to infer Granger causal 
+	peak-gene relationships. The default setting takes unnormalized counts data
+	for both the RNA-seq and ATAC-seq datasets and automatically pre-processes
+	both datasets. This wrapper function requires that the RNA-seq and ATAC-seq
+	datasets be annotated with information about the genomic positions of gene
+	transcription start sites and peak start and end sites.
+
+	Parameters
+	----------
+	rna_adata: `AnnData`
+		AnnData object containing the RNA-seq data. 
+	atac_adata: `AnnData`
+		AnnData object containing the ATAC-seq data.
+	root_cell_marker_gene: 'str'
+		Name of the marker gene for the root cell type to be used for
+		pseudotime inference. One of 'root_cell_marker_gene' or 
+		'root_cell_idx' must be provided.
+	root_cell_idx: 'int'
+		The index of the root cell to be used for pseudotime inference.
+		One of 'root_cell_marker_gene' or 'root_cell_idx' must be provided.
+	"""
+
+	# data pre-processing
+	if preprocess:
+		print('Pre-processing multimodal data...')
+		preprocess_multimodal(rna_adata,atac_adata,
+					  rna_normalize_total=rna_normalize_total,
+					  atac_normalize_total=atac_normalize_total,
+					  rna_filter_gene_percent=rna_filter_gene_percent,
+					  atac_filter_peak_percent=atac_filter_peak_percent)
+	
+	# set root cell for pseudotime inference
+	if root_cell_idx is not None:
+		iroot = root_cell_idx
+	elif root_cell_marker_gene is None:
+		if 'iroot' in rna_adata.uns:
+			iroot = rna_adata.uns['iroot']
+		elif 'iroot' in atac_adata.uns:
+			iroot = atac_adata.uns['iroot']
+		elif root_cell_idx is None:
+			sys.stderr.write('ERROR: Root cell not annotated. ' 
+							 'Please provide a marker gene for ' 
+							 'the root cell type or provide the '
+							 'index for the root cell.')
+	else:      
+		set_dpt_root(rna_adata,root_cell_marker_gene)
+		iroot = rna_adata.uns['iroot']
+	
+	# identify candidate peak-gene links to be evaluated
+	if rna_chr_key not in rna_adata.var \
+		or rna_txstart_key not in rna_adata.var:
+		sys.stderr.write('ERROR: RNA AnnData object annotations '
+						 'for gene transcription start sites '
+						 'do not match the provided keys.')  
+	elif atac_chr_key not in atac_adata.var \
+		or atac_start_key not in atac_adata.var \
+		or atac_end_key not in atac_adata.var:
+		sys.stderr.write('ERROR: ATAC AnnData object annotations '
+						 'for peak locations do not match the '
+						 'the provided keys.')
+	else:
+		print('Identifying all peak-gene link candidates...')
+		candidates_df = identify_all_peak_gene_link_candidates(rna_adata,atac_adata,
+							distance_thresh=distance_thresh,rna_chr_key=rna_chr_key,
+							rna_txstart_key=rna_txstart_key,atac_chr_key=atac_chr_key,
+							atac_start_key=atac_start_key,atac_end_key=atac_end_key)
+	
+	# learn joint multimodal representations
+	print('Using Schema to learn joint multimodal representations...')
+	X_joint = schema_representations(rna_adata,atac_adata)
+	
+	# construct DAG of cells
+	print('Constructing DAG of cells...')
+	dag_adjacency_matrix = construct_dag(X_joint,iroot,n_neighbors=15,
+										 pseudotime_algo='dpt')
+	
+	# run GrID-Net
+	print('Running GrID-Net...')
+	if scale_rna_by_max:
+		X_max = rna_adata.X.max(0).toarray().squeeze()
+		X_max[X_max == 0] = 1
+		rna_adata.X = csr_matrix(rna_adata.X / X_max)
+		
+	X = atac_adata.X.toarray() if issparse(atac_adata.X) else atac_adata.X
+	Y = rna_adata.X.toarray() if issparse(rna_adata.X) else rna_adata.X
+
+	X_feature_names = atac_adata.var.index.values
+	Y_feature_names = rna_adata.var.index.values
+	candidate_XY_pairs = [(x,y) for x,y in candidates_df[['atac_id','gene']].values]
+	
+	results_df = run_gridnet(X,Y,X_feature_names,Y_feature_names,
+						 	candidate_XY_pairs,dag_adjacency_matrix,
+						 	device=device)
+	
+	return results_df
