@@ -7,8 +7,8 @@ import os
 import sys
 from scipy.sparse import issparse
 
-from utils import *
-from models import GraphGrangerModule
+from .utils import *
+from .models import GraphGrangerModule
 
 def run_gridnet(X,Y,X_feature_names,Y_feature_names,candidate_XY_pairs,dag_adjacency_matrix,
 			n_layers=10,device=0,seed=1,shuffle=True,batch_size=1024,optim='adam',

@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 import gridnet
 
 setup(
-    name="gridnet",
+    name="gridnet_learn",
     version=gridnet.__version__,
     description="GrID-Net: Granger causal inference on DAGs identifies genomic loci regulating transcription",
     author="Alex Wu, Rohit Singh",
