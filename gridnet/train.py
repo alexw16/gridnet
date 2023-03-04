@@ -305,6 +305,8 @@ def gridnet_multimodal(rna_adata,atac_adata,root_cell_marker_gene=None,root_cell
 						 'the provided keys.')
 	else:
 		print('Identifying all peak-gene link candidates...')
+		rna_adata.var_names_make_unique()
+		atac_adata.var_names_make_unique()
 		candidates_df = identify_all_peak_gene_link_candidates(rna_adata,atac_adata,
 							distance_thresh=distance_thresh,rna_chr_key=rna_chr_key,
 							rna_txstart_key=rna_txstart_key,atac_chr_key=atac_chr_key,
@@ -321,6 +323,11 @@ def gridnet_multimodal(rna_adata,atac_adata,root_cell_marker_gene=None,root_cell
 	
 	# run GrID-Net
 	print('Running GrID-Net...')
+
+	# filter RNA-seq & ATAC-seq datasets to include only candidate peak-gene pairs
+	rna_adata = rna_adata[:,rna_adata.var.index.isin(candidates_df['gene'])]
+	atac_adata = atac_adata[:,atac_adata.var.index.isin(candidates_df['atac_id'])]
+
 	if scale_rna_by_max:
 		X_max = rna_adata.X.max(0).toarray().squeeze()
 		X_max[X_max == 0] = 1

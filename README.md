@@ -42,12 +42,12 @@ X_joint = schema_representations(rna_adata,atac_adata)
 ```
 4. Construct the DAG of cells: use the multimodal cell representations to infer pseudotime and to orient the edges of the kNN graph to form a DAG 
 ```python
-dag_adjacency_matrix = contruct_dag(X_joint,iroot,n_neighbors=15,pseudotime_algo='dpt')
+dag_adjacency_matrix = construct_dag(X_joint,iroot,n_neighbors=15,pseudotime_algo='dpt')
 ```
 5. Run GrID-Net: uses the various results from above to infer Granger causal peak-gene links. Outputs a DataFrame annotating the candidate peak-gene pairs and the corresponding Granger causality test statistics.  
 ```python
-X = np.array(atac_adata.X)
-Y = np.array(rna_adata.X)
+X = atac_adata.X.toarray() if issparse(atac_adata.X) else atac_adata.X
+Y = rna_adata.X.toarray() if issparse(rna_adata.X) else rna_adata.X
 X_feature_names = atac_adata.var.index.values
 Y_feature_names = rna_adata.var.index.values
 candidate_XY_pairs = [(x,y) for x,y in candidates_df[['atac_id','gene']].values]
