@@ -4,8 +4,10 @@
 ## Installation
 ```python
 pip install gridnet_learn  
+```
 
-#in python
+Then, in Python
+```python
 import gridnet
 ```
 
