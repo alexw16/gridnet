@@ -1,3 +1,5 @@
+![GrID-Net Schematic](https://user-images.githubusercontent.com/6614489/222857807-263d0fa0-c7e9-41e2-aa61-2b1ba5f59df2.png)
+
 # GrID-Net
 **GrID-Net** (**Gr**anger **I**nference on **D**AGs) is a graph neural network framework for Granger causal inference on directed acyclic graph (DAG)-structured dynamical systems, as described in the preprint ["An econometric lens resolves cell-state parallax"](https://www.biorxiv.org/content/10.1101/2023.03.02.530529) and the paper ["Granger causal inference on DAGs identifies genomic loci regulating transcription"](https://arxiv.org/abs/2210.10168). It takes as input (1) a dataset featurized by the set of candidate Granger causal variables of interest, (2) a corresponding dataset featurized by the set of target variables of interest, (3) a set of candidate Granger causal relationships to be evaluated, and (4) a DAG representing the relationship between observations in the dataset. The output is a table of statistics that describes the significance of each of the tested candidate Granger causal relationships. 
 
