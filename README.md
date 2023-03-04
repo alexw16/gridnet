@@ -61,10 +61,10 @@ Y_feature_names = rna_adata.var.index.values
 candidate_XY_pairs = [(x,y) for x,y in candidates_df[['atac_id','gene']].values]
     
 results_df = gridnet.run_gridnet(X,Y,X_feature_names,Y_feature_names,
-                         candidate_XY_pairs,dag_adjacency_matrix)
+                                 candidate_XY_pairs,dag_adjacency_matrix)
 ``` 
 
-### General Usage
+### General Usage (beyond single-cell genomics, for arbitrary DAG-structured Granger causal inference) 
 Here is a general workflow for applying GrID-Net to a dataset with a user-defined DAG. First, prepare one dataset that contains the candidate Granger causal variables and another that contains the target variables. The rows of the two datasets should be paired, such that row *n* corresponds to the candidate Granger causal variable values and target variable values for the same observation *n*.  
 
 In the case of inferring peak-gene pairs from single-cell multi-omic datasets, the candidate Granger causal variables correspond to peaks and the target variables correspond to genes, with each cell representing a unique observation. 
