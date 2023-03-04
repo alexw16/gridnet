@@ -14,7 +14,7 @@ import gridnet
 ```
 
 ## Usage
-### Multimodal Single-Cell Data (RNA-seq + ATAC-seq): Quick Start
+### Quick Start: Multimodal Single-Cell Data (RNA-seq + ATAC-seq)
 To use GrID-Net for inferring noncoding locus (i.e. peak)-gene links from single-cell multimodal data, we have provided a wrapper function that minimally requires (1) unprocessed AnnData objects for each of the RNA-seq and ATAC-seq datasets and (2) either a marker gene for the root cell type or a root cell index for pseudotime inference. This function will automatically perform pre-processing of the RNA-seq and ATAC-seq datasets, determine the candidate peak-gene pairs to evaluate, construct the DAG of cells, and run GrID-Net. 
 
 ```python
@@ -38,7 +38,7 @@ Some key parameters that users can optionally adjust in this function include
 2. ```rna_filter_gene_percent```: minimum proportion of cells a gene is expressed to be considered in a candidate peak-gene pair (default: 1% of cells)
 3. ```atac_filter_peak_percent```: minimum proportion of cells a peak is accessible to be considered in a candidate peak-gene pair (default: 0.1% of cells)
 
-### Multimodal Single-Cell Data (RNA-seq + ATAC-seq): Detailed
+### Step-by-Step: Multimodal Single-Cell Data (RNA-seq + ATAC-seq)
 For users seeking greater control over the various pre-processing and analysis steps for single-cell multimodal data, we include here the key steps that lead up to using GrID-Net on this data.
 1. Data pre-processing: count normalization and log(1+x) transformation
 ```python
