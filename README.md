@@ -1,3 +1,5 @@
+## Note: this is a mirror of https://github.com/alexw16/gridnet ##
+
 ![GrID-Net Schematic](https://user-images.githubusercontent.com/6614489/222857807-263d0fa0-c7e9-41e2-aa61-2b1ba5f59df2.png)
 
 # GrID-Net
